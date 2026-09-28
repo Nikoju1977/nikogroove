@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cyber-Fest-Noz — Groovebox EBM Breizh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<style>
+/* =========================================================
+   THÈME « DARK INDUSTRIAL CELTIC »
+   Anthracite + vert terminal + noir/blanc Gwenn ha Du
+   ========================================================= */
+:root{
+  --bg:#0d0f0e;          /* anthracite quasi-noir */
+  --panel:#151816;       /* plaques d'acier */
+  --panel-2:#1b1f1c;
+  --line:#2a302c;        /* rivets / séparations */
+  --neon:#3dff7a;        /* vert terminal */
+  --neon-dim:#1d5e36;
+  --gwenn:#ecebe4;       /* blanc Gwenn ha Du */
+  --du:#050505;          /* noir Gwenn ha Du */
+  --muted:#7d877f;
+  --rec:#ff3b3b;
+  --display:"Bebas Neue", "Oswald", "Arial Narrow", sans-serif;
+  --mono:"Space Mono", "Courier New", ui-monospace, monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--gwenn);font-family:var(--mono);font-size:14px;min-height:100dvh}
+body{
+  padding:calc(12px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-right,0px))
+          calc(24px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px));
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0 1px, transparent 1px 3px);
+}
+button,select,input{font-family:var(--mono);font-size:16px;color:var(--gwenn)}
+:focus-visible{outline:2px solid var(--neon);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+
+/* ---------- En-tête ---------- */
+header{display:flex;align-items:stretch;gap:14px;border-bottom:2px solid var(--line);padding-bottom:12px}
+.flag{width:58px;flex:0 0 58px;
+  background:repeating-linear-gradient(to bottom,var(--du) 0 7px,var(--gwenn) 7px 14px);
+  border:2px solid var(--gwenn)}
+.title h1{font-family:var(--display);font-weight:400;font-size:clamp(34px,7vw,64px);line-height:.9;letter-spacing:.02em}
+.title h1 span{color:var(--neon);text-shadow:0 0 12px rgba(61,255,122,.45)}
+.title p{color:var(--muted);font-size:12px;margin-top:6px}
+
+/* ---------- Barre transport ---------- */
+.transport{display:grid;grid-template-columns:auto 1fr;gap:12px;background:var(--panel);border:1px solid var(--line);padding:12px}
+.tcontrols{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{background:var(--panel-2);border:1px solid var(--line);padding:10px 14px;cursor:pointer;min-height:44px;transition:background .12s,border-color .12s}
+.btn:hover{border-color:var(--neon-dim)}
+.btn.primary{background:var(--neon);color:var(--du);font-weight:700;border-color:var(--neon);min-width:110px}
+.btn.primary.on{background:var(--du);color:var(--neon)}
+.btn.toggle.on{background:var(--gwenn);color:var(--du);border-color:var(--gwenn)}
+.btn.rec.on{background:var(--rec);color:var(--du);border-color:var(--rec);animation:blink 1s steps(2) infinite}
+.btn.small{padding:6px 10px;min-height:34px;font-size:13px}
+@keyframes blink{50%{opacity:.55}}
+.field{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted)}
+.field output{color:var(--neon)}
+.field input[type=range]{width:120px}
+select{background:var(--panel-2);border:1px solid var(--line);padding:8px;min-height:44px}
+input[type=range]{accent-color:var(--neon);height:24px}
+canvas#scope{width:100%;height:64px;background:var(--du);border:1px solid var(--line);display:block}
+.scopebox{min-width:0}
+
+/* ---------- Sections ---------- */
+section{background:var(--panel);border:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:10px}
+section h2{font-family:var(--display);font-weight:400;font-size:28px;letter-spacing:.04em;line-height:1}
+section h2 small{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0;margin-left:8px}
+.shead{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px}
+.knobs{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+
+/* ---------- Grilles 16 pas ---------- */
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.grid{display:grid;grid-template-columns:54px repeat(16,minmax(24px,1fr));gap:3px;min-width:500px}
+.lbl{font-size:11px;color:var(--muted);display:flex;align-items:center;justify-content:flex-end;padding-right:6px}
+.num{font-size:10px;color:var(--muted);text-align:center}
+.num.beat{color:var(--gwenn)}
+.cell{height:28px;background:#171a18;border:1px solid #262b28;cursor:pointer;padding:0}
+.cell.g{background:#1d211e}                       /* groupes de 4 temps */
+.cell.on{background:var(--neon);border-color:var(--neon);box-shadow:0 0 8px rgba(61,255,122,.5)}
+.cell.play{outline:1px solid var(--gwenn);outline-offset:-1px}
+.cell.on.play{background:var(--gwenn);border-color:var(--gwenn)}
+
+/* Le biniou : cellules Gwenn ha Du (blanc sur noir) */
+.biniou{border-color:var(--gwenn);background:
+  linear-gradient(var(--panel),var(--panel)) padding-box}
+.biniou .cell{background:var(--du);border-color:#2b2b2b;height:24px}
+.biniou .cell.g{background:#0c0c0c}
+.biniou .cell.on{background:var(--gwenn);border-color:var(--gwenn);box-shadow:0 0 10px rgba(236,235,228,.35)}
+.biniou .cell.on.play{background:var(--neon);border-color:var(--neon)}
+.biniou h2{color:var(--gwenn)}
+
+/* Clavier live du biniou */
+.keys{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+.key{background:var(--gwenn);color:var(--du);border:1px solid var(--gwenn);min-height:70px;cursor:pointer;
+  display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:6px 0;font-size:12px;
+  touch-action:none;user-select:none;-webkit-user-select:none}
+.key b{font-family:var(--display);font-size:22px;font-weight:400}
+.key.down{background:var(--neon);border-color:var(--neon)}
+
+/* ---------- Écran de démarrage ---------- */
+#boot{position:fixed;inset:0;background:rgba(5,5,5,.96);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px}
+#boot .box{max-width:520px;border:2px solid var(--gwenn);padding:28px;display:flex;flex-direction:column;gap:16px;background:var(--bg)}
+#boot h2{font-family:var(--display);font-weight:400;font-size:44px;line-height:.95}
+#boot p{color:var(--muted);line-height:1.6;font-size:13px}
+#boot .err{color:var(--rec)}
+.hidden{display:none !important}
+.status{font-size:12px;color:var(--muted);min-height:1.2em}
+
+@media (max-width:720px){
+  .transport{grid-template-columns:1fr}
+  .field input[type=range]{width:100px}
+  .key{min-height:58px}
+}
+@media (prefers-reduced-motion:reduce){ .btn.rec.on{animation:none} }
+</style>
+</head>
+<body>
+
+<!-- Écran de démarrage : le contexte audio ne démarre qu'après ce clic (politique autoplay des navigateurs) -->
+<div id="boot">
+  <div class="box">
+    <h2>Cyber-Fest-Noz</h2>
+    <p>Groovebox EBM avec biniou électronique. Le navigateur exige un clic avant de produire du son.</p>
+    <button class="btn primary" id="bootBtn">Initialiser l'audio</button>
+    <p class="status" id="bootStatus"></p>
+  </div>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="flag" aria-hidden="true"></div>
+    <div class="title">
+      <h1>Cyber-Fest-<span>Noz</span></h1>
+      <p>Electronic Body Music × biniou kozh — 16 pas, bourdon continu, levriad à glissandi.</p>
+    </div>
+  </header>
+
+  <!-- ===== Transport ===== -->
+  <div class="transport">
+    <div class="tcontrols">
+      <button class="btn primary" id="playBtn" disabled>Lecture</button>
+      <label class="field">Tempo <output id="bpmOut">115</output>
+        <input type="range" id="bpm" min="70" max="170" value="115"></label>
+      <label class="field">Volume <output id="volOut">-6 dB</output>
+        <input type="range" id="vol" min="-40" max="0" value="-6"></label>
+      <label class="field">Tonalité
+        <select id="tonic">
+          <option value="0" selected>Sol (G)</option>
+          <option value="2">La (A)</option>
+          <option value="3">Si♭ (B♭)</option>
+          <option value="5">Do (C)</option>
+          <option value="-5">Ré (D)</option>
+          <option value="-3">Mi (E)</option>
+          <option value="-2">Fa (F)</option>
+        </select></label>
+      <button class="btn toggle" id="droneBtn" disabled>Bourdon : off</button>
+      <button class="btn rec" id="recBtn" disabled>Enregistrer</button>
+      <button class="btn" id="saveBtn" disabled>Sauver</button>
+      <button class="btn" id="loadBtn" disabled>Charger</button>
+    </div>
+    <div class="scopebox">
+      <canvas id="scope" width="600" height="64"></canvas>
+      <p class="status" id="status">Audio non initialisé.</p>
+    </div>
+  </div>
+
+  <!-- ===== Boîte à rythmes ===== -->
+  <section>
+    <div class="shead">
+      <h2>Boîte à rythmes <small>kick saturé, snare bitcrushée, hat FM</small></h2>
+      <div class="knobs">
+        <label class="field">Drive kick <output id="kdriveOut">0.45</output>
+          <input type="range" id="kdrive" min="0" max="1" step="0.01" value="0.45"></label>
+        <button class="btn small" data-clear="drums">Effacer</button>
+      </div>
+    </div>
+    <div class="scroll"><div class="grid" id="drumGrid"></div></div>
+  </section>
+
+  <!-- ===== Basse EBM ===== -->
+  <section>
+    <div class="shead">
+      <h2>Basse EBM <small>dent de scie, passe-bas 24 dB, enveloppe pluckée</small></h2>
+      <div class="knobs">
+        <label class="field">Coupure <output id="bcutOut">110 Hz</output>
+          <input type="range" id="bcut" min="40" max="600" value="110"></label>
+        <label class="field">Résonance <output id="bresOut">9</output>
+          <input type="range" id="bres" min="0.5" max="20" step="0.5" value="9"></label>
+        <label class="field">Pluck <output id="bdecOut">0.12 s</output>
+          <input type="range" id="bdec" min="0.03" max="0.5" step="0.01" value="0.12"></label>
+        <button class="btn small" data-clear="bass">Effacer</button>
+      </div>
+    </div>
+    <div class="scroll"><div class="grid" id="bassGrid"></div></div>
+  </section>
+
+  <!-- ===== Biniou électronique ===== -->
+  <section class="biniou">
+    <div class="shead">
+      <h2>Biniou électronique <small>levriad (mélodie) + bourdon</small></h2>
+      <div class="knobs">
+        <label class="field">Glide <output id="glideOut">60 ms</output>
+          <input type="range" id="glide" min="0" max="0.25" step="0.005" value="0.06"></label>
+        <label class="field">Mordant <output id="biteOut">1400 Hz</output>
+          <input type="range" id="bite" min="400" max="4000" value="1400"></label>
+        <label class="field">Delay <output id="dlyOut">30 %</output>
+          <input type="range" id="dly" min="0" max="0.8" step="0.01" value="0.3"></label>
+        <label class="field">Réverbe <output id="revOut">28 %</output>
+          <input type="range" id="rev" min="0" max="0.9" step="0.01" value="0.28"></label>
+        <label class="field">Bourdon <output id="dvolOut">-16 dB</output>
+          <input type="range" id="dvol" min="-40" max="-4" value="-16"></label>
+        <button class="btn small toggle on" id="ornBtn">Ornements : on</button>
+        <button class="btn small toggle" id="liveRecBtn">Écrire au clavier : off</button>
+        <button class="btn small" data-clear="biniou">Effacer</button>
+      </div>
+    </div>
+    <p class="status">Une note répétée est tenue ; avec les ornements, elle est détachée par une note de grâce, comme un sonneur. Une case vide coupe le son.</p>
+    <div class="scroll"><div class="grid" id="biniouGrid"></div></div>
+    <div class="keys" id="keys"></div>
+    <p class="status">Jeu live : touches Q S D F G H J K L (AZERTY) ou appui sur le clavier ci-dessus. « Écrire au clavier » inscrit la note au pas en cours pendant la lecture.</p>
+  </section>
+</div>
+
+<script>
+/* =====================================================================
+   CYBER-FEST-NOZ — Groovebox EBM bretonne (Tone.js 14.8.49)
+   Studio Niko Design
+   ===================================================================== */
+'use strict';
+
+const STEPS = 16;
+
+/* ---------------------------------------------------------------------
+   GAMMES
+   BASS_ROWS  : notes disponibles pour la basse (grave → aigu).
+   BINIOU_ROWS: échelle du levriad (grave → aigu). Par défaut Sol mixolydien
+                (Fa naturel), proche de la couleur du biniou kozh.
+   Pour changer l'échelle du biniou, modifiez ce tableau (ex. ajouter 'B5',
+   remplacer 'F5' par 'F#5' pour un Sol majeur plus « bombarde »).
+   Toutes les notes sont écrites en Sol ; le sélecteur « Tonalité »
+   transpose l'ensemble (basse, levriad ET bourdon).
+--------------------------------------------------------------------- */
+const BASS_ROWS   = ['G1','A#1','C2','D2','F2','G2'];
+const BINIOU_ROWS = ['G4','A4','B4','C5','D5','E5','F5','G5','A5'];
+const KEY_CODES   = ['KeyA','KeyS','KeyD','KeyF','KeyG','KeyH','KeyJ','KeyK','KeyL']; // codes physiques
+const KEY_LABELS  = ['Q','S','D','F','G','H','J','K','L'];                             // étiquettes AZERTY
+
+/* ---------------------------------------------------------------------
+   NOTE DU BOURDON
+   Le bourdon du biniou kozh sonne deux octaves sous la tonique du levriad.
+   Modifiez DRONE_NOTE pour changer sa hauteur de référence
+   (ex. 'G3' pour un bourdon plus présent, 'D2' pour un bourdon en quinte).
+   Il suit ensuite automatiquement le sélecteur « Tonalité ».
+--------------------------------------------------------------------- */
+const DRONE_NOTE = 'G2';
+
+/* ---------- État (motifs par défaut) ---------- */
+const DEFAULT_STATE = {
+  kick : [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0],
+  snare: [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,1],
+  hat  : [0,0,1,0, 0,0,1,0, 0,0,1,0, 0,0,1,1],
+  // basse « rolling » : les doubles croches remplissent les trous du kick
+  bass : [null,'G1','G1','G1', null,'G1','G1','G2', null,'G1','G1','G1', null,'A#1','C2','D2'],
+  // phrase façon an-dro
+  biniou:['G4','G4','B4','D5', 'D5','C5','B4','A4', 'G4','G4','A4','B4', 'C5','B4','A4',null]
+};
+let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+let transpose = 0;      // demi-tons par rapport à Sol
+let ornaments = true;   // notes de grâce du sonneur
+let liveRec = false;
+let currentStep = -1;
+let audioReady = false;
+let droneOn = false;
+
+const $ = id => document.getElementById(id);
+const fq = n => Tone.Frequency(n).transpose(transpose).toFrequency();
+
+/* =====================================================================
+   safeStorage — IndexedDB avec repli en mémoire (convention Studio Niko)
+   ===================================================================== */
+const safeStorage = (() => {
+  const mem = new Map();
+  let dbp = null;
+  function db(){
+    if (dbp) return dbp;
+    dbp = new Promise((res, rej) => {
+      try {
+        const r = indexedDB.open('cyber-fest-noz', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('kv');
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      } catch (e) { rej(e); }
+    });
+    return dbp;
+  }
+  return {
+    async set(k, v){
+      mem.set(k, v);
+      try { const d = await db(); await new Promise((res, rej) => {
+        const tx = d.transaction('kv','readwrite'); tx.objectStore('kv').put(v, k);
+        tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); return 'idb'; }
+      catch { return 'mem'; }
+    },
+    async get(k){
+      try { const d = await db(); return await new Promise((res, rej) => {
+        const rq = d.transaction('kv','readonly').objectStore('kv').get(k);
+        rq.onsuccess = () => res(rq.result ?? mem.get(k)); rq.onerror = () => rej(rq.error); }); }
+      catch { return mem.get(k); }
+    }
+  };
+})();
+
+/* =====================================================================
+   CONSTRUCTION DES INSTRUMENTS (après le clic d'initialisation)
+   ===================================================================== */
+let master, comp, limiter, scope, recorder;
+let kick, kickDrive, snare, hat, bass;
+let droneOsc, droneLFO, breathLFO, droneFilter, droneDist, droneBreath, droneGate, droneVol;
+let levriad, levDist, levDelay, levReverb;
+
+async function buildAudio(){
+  /* ---------- Bus master : volume → compresseur « glue » → limiteur ---------- */
+  master  = new Tone.Volume(-6);
+  comp    = new Tone.Compressor({ threshold:-18, ratio:4, attack:0.005, release:0.12 });
+  limiter = new Tone.Limiter(-1);
+  scope   = new Tone.Waveform(512);
+  master.chain(comp, limiter, Tone.Destination);
+  limiter.connect(scope);
+  if (typeof MediaRecorder !== 'undefined') { recorder = new Tone.Recorder(); limiter.connect(recorder); }
+
+  /* ---------- KICK : membrane à pitch decay rapide + overdrive (Nitzer Ebb / Front 242) ---------- */
+  kickDrive = new Tone.Distortion({ distortion:0.45, oversample:'2x' });
+  const kickTone = new Tone.Filter(3200, 'lowpass');
+  kick = new Tone.MembraneSynth({
+    pitchDecay: 0.028, octaves: 6.5, oscillator:{ type:'sine' },
+    envelope:{ attack:0.001, decay:0.32, sustain:0, release:0.05 }
+  });
+  kick.chain(kickDrive, kickTone, master);
+
+  /* ---------- SNARE/CLAP : bruit blanc filtré + réduction de bits (sec, métallique) ----------
+     Le bitcrusher est un WaveShaper qui quantifie le signal sur ~16 niveaux
+     (≈ 4 bits). Plus robuste que l'AudioWorklet de Tone.BitCrusher en local. */
+  snare = new Tone.NoiseSynth({ noise:{ type:'white' }, envelope:{ attack:0.001, decay:0.11, sustain:0, release:0.02 } });
+  const snBand  = new Tone.Filter({ frequency:1900, type:'bandpass', Q:1.4 });
+  const snCrush = new Tone.WaveShaper(x => Math.round(x * 8) / 8, 4096);
+  const snHP    = new Tone.Filter(700, 'highpass');
+  const snVol   = new Tone.Volume(-4);
+  snare.chain(snBand, snCrush, snHP, snVol, master);
+
+  /* ---------- HAT : synthèse FM métallique, très court ---------- */
+  hat = new Tone.MetalSynth({
+    envelope:{ attack:0.001, decay:0.045, release:0.01 },
+    harmonicity:5.1, modulationIndex:32, resonance:7000, octaves:1.5
+  });
+  hat.volume.value = -18;
+  hat.connect(master);
+
+  /* ---------- BASSE EBM : saw mono, LP 24 dB/oct résonant, enveloppe de filtre pluckée ---------- */
+  bass = new Tone.MonoSynth({
+    oscillator:{ type:'sawtooth' },
+    filter:{ type:'lowpass', rolloff:-24, Q:9 },
+    envelope:{ attack:0.002, decay:0.14, sustain:0.25, release:0.04 },
+    filterEnvelope:{ attack:0.001, decay:0.12, sustain:0, release:0.04, baseFrequency:110, octaves:4.2, exponent:2 }
+  });
+  bass.volume.value = -6;
+  bass.connect(master);
+
+  /* =================================================================
+     LE BINIOU ÉLECTRONIQUE
+     ================================================================= */
+
+  /* ---------- 1. LE BOURDON (drone) ----------
+     Oscillateur carré continu. Un LFO lent module le désaccord (detune, en cents)
+     pour simuler le souffle du sonneur ; un 2e LFO respire sur l'amplitude.
+     TIMBRE : type 'square' → essayez 'sawtooth' (plus rauque) ou 'pulse'.
+     Ajustez droneFilter (fréquence) pour l'ouvrir/l'étouffer,
+     droneDist.distortion (0 à 1) pour le grain. */
+  droneOsc    = new Tone.Oscillator({ frequency: fq(DRONE_NOTE), type:'square' });
+  droneLFO    = new Tone.LFO({ frequency:0.27, min:-7, max:7 });       // ± 7 cents de flottement
+  breathLFO   = new Tone.LFO({ frequency:0.19, min:0.82, max:1 });     // souffle sur le volume
+  droneFilter = new Tone.Filter(1300, 'lowpass');
+  droneDist   = new Tone.Distortion(0.22);
+  droneBreath = new Tone.Gain(1);
+  droneGate   = new Tone.Gain(0);                                      // on/off sans clic
+  droneVol    = new Tone.Volume(-16);
+  droneLFO.connect(droneOsc.detune);
+  breathLFO.connect(droneBreath.gain);
+  droneOsc.chain(droneFilter, droneDist, droneBreath, droneGate, droneVol, master);
+  droneOsc.start(); droneLFO.start(); breathLFO.start();
+
+  /* ---------- 2. LE LEVRIAD (mélodie) ----------
+     DuoSynth = deux voix monophoniques : voix 0 en dent de scie, voix 1 en carré
+     légèrement désaccordée → timbre perçant d'anche double.
+     portamento = glissé entre notes (jeu lié du sonneur).
+     vibrato léger = instabilité de l'anche.
+     TIMBRE : changez les 'type' des oscillateurs, filterEnvelope.baseFrequency
+     (slider « Mordant ») et le mix voix0/voix1 (volume de chaque voix). */
+  const voice = (type, vol, detune) => ({
+    volume: vol,
+    oscillator:{ type, detune },
+    filter:{ type:'lowpass', Q:2, rolloff:-12 },
+    envelope:{ attack:0.008, decay:0.1, sustain:1, release:0.09 },
+    filterEnvelope:{ attack:0.004, decay:0.25, sustain:0.85, release:0.1, baseFrequency:1400, octaves:2.2 }
+  });
+  levriad = new Tone.DuoSynth({
+    harmonicity: 1, vibratoAmount: 0.07, vibratoRate: 5.8,
+    portamento: 0.06,
+    voice0: voice('sawtooth', -6, 0),
+    voice1: voice('square', -10, 9)
+  });
+  levriad.volume.value = -10;
+  const levHP = new Tone.Filter(350, 'highpass');                        // enlève la boue, garde le perçant
+  levDist   = new Tone.Distortion(0.12);
+  levDelay  = new Tone.PingPongDelay({ delayTime:'8n.', feedback:0.34, wet:0.3 });
+  levReverb = new Tone.Reverb({ decay:3.8, preDelay:0.02, wet:0.28 });   // hangar industriel
+  levriad.chain(levHP, levDist, levDelay, levReverb, master);
+  await levReverb.generate();
+
+  /* ---------- Séquenceur 16 pas ---------- */
+  new Tone.Sequence((time, step) => {
+    if (state.kick[step])  kick.triggerAttackRelease('C1', '8n', time);
+    if (state.snare[step]) snare.triggerAttackRelease('16n', time, 0.9);
+    if (state.hat[step])   hat.triggerAttackRelease(320, '32n', time, step % 4 === 2 ? 0.9 : 0.5);
+    const b = state.bass[step];
+    if (b) bass.triggerAttackRelease(fq(b), '32n', time);
+    playBiniouStep(step, time);
+    Tone.Draw.schedule(() => highlight(step), time);
+  }, [...Array(STEPS).keys()], '16n').start(0);
+
+  Tone.Transport.bpm.value = +$('bpm').value;
+  audioReady = true;          // les réglages peuvent maintenant piloter le moteur
+  applyAllKnobs();
+}
+
+/* ---------------------------------------------------------------------
+   Logique du levriad séquencé
+   - note différente   → attaque (glisse depuis la précédente si elle sonne)
+   - même note         → tenue ; avec ornements : note de grâce qui la détache
+   - case vide         → relâchement
+--------------------------------------------------------------------- */
+let biniouPrev = null;
+const liveHeld = [];
+
+function graceOf(n){
+  const i = BINIOU_ROWS.indexOf(n);
+  return BINIOU_ROWS[i < BINIOU_ROWS.length - 1 ? i + 1 : i - 1];
+}
+function playBiniouStep(step, time){
+  if (liveHeld.length) return;            // le jeu live a la priorité
+  const n = state.biniou[step];
+  if (!n){
+    if (biniouPrev){ levriad.triggerRelease(time); biniouPrev = null; }
+    return;
+  }
+  if (n === biniouPrev){
+    if (ornaments){
+      levriad.triggerAttack(fq(graceOf(n)), time);
+      levriad.triggerAttack(fq(n), time + 0.04);
+    }
+    return;
+  }
+  if (ornaments && biniouPrev){
+    levriad.triggerAttack(fq(graceOf(n)), time);
+    levriad.triggerAttack(fq(n), time + 0.035);
+  } else {
+    levriad.triggerAttack(fq(n), time);
+  }
+  biniouPrev = n;
+}
+
+/* =====================================================================
+   INTERFACE : construction des grilles
+   ===================================================================== */
+function numberRow(grid){
+  grid.appendChild(Object.assign(document.createElement('div'), { className:'lbl' }));
+  for (let s = 0; s < STEPS; s++){
+    const d = document.createElement('div');
+    d.className = 'num' + (s % 4 === 0 ? ' beat' : '');
+    d.textContent = s + 1;
+    grid.appendChild(d);
+  }
+}
+function makeCell(step, onClick, label){
+  const c = document.createElement('button');
+  c.className = 'cell' + (Math.floor(step / 4) % 2 ? ' g' : '');
+  c.dataset.step = step;
+  c.setAttribute('aria-label', label);
+  c.addEventListener('click', onClick);
+  return c;
+}
+
+function buildDrumGrid(){
+  const g = $('drumGrid'); g.innerHTML = ''; numberRow(g);
+  [['kick','Kick'],['snare','Snare'],['hat','Hat']].forEach(([key, name]) => {
+    g.appendChild(Object.assign(document.createElement('div'), { className:'lbl', textContent:name }));
+    for (let s = 0; s < STEPS; s++){
+      const c = makeCell(s, () => { state[key][s] = state[key][s] ? 0 : 1; refresh(); }, `${name} pas ${s+1}`);
+      c.dataset.track = key;
+      g.appendChild(c);
+    }
+  });
+}
+
+function buildRoll(gridId, rows, key){
+  const g = $(gridId); g.innerHTML = ''; numberRow(g);
+  [...rows].reverse().forEach(note => {           // aigu en haut
+    g.appendChild(Object.assign(document.createElement('div'), { className:'lbl', textContent:note.replace('#','♯') }));
+    for (let s = 0; s < STEPS; s++){
+      const c = makeCell(s, () => {
+        state[key][s] = state[key][s] === note ? null : note;   // une seule note par pas (mono)
+        refresh();
+        if (audioReady && Tone.Transport.state !== 'started') preview(key, note);
+      }, `${key} ${note} pas ${s+1}`);
+      c.dataset.track = key; c.dataset.note = note;
+      g.appendChild(c);
+    }
+  });
+}
+
+function preview(key, note){
+  if (key === 'bass') bass.triggerAttackRelease(fq(note), '16n');
+  else levriad.triggerAttackRelease(fq(note), '8n');
+}
+
+function refresh(){
+  document.querySelectorAll('.cell').forEach(c => {
+    const s = +c.dataset.step, t = c.dataset.track;
+    const on = c.dataset.note ? state[t][s] === c.dataset.note : !!state[t][s];
+    c.classList.toggle('on', on);
+  });
+}
+function highlight(step){
+  currentStep = step;
+  document.querySelectorAll('.cell.play').forEach(c => c.classList.remove('play'));
+  document.querySelectorAll(`.cell[data-step="${step}"]`).forEach(c => c.classList.add('play'));
+}
+
+/* ---------- Clavier live du biniou ---------- */
+function buildKeys(){
+  const k = $('keys'); k.innerHTML = '';
+  BINIOU_ROWS.forEach((note, i) => {
+    const b = document.createElement('button');
+    b.className = 'key'; b.dataset.note = note;
+    b.innerHTML = `<b>${note}</b>${KEY_LABELS[i]}`;
+    b.addEventListener('pointerdown', e => { e.preventDefault(); b.setPointerCapture(e.pointerId); liveDown(note); });
+    b.addEventListener('pointerup',     () => liveUp(note));
+    b.addEventListener('pointercancel', () => liveUp(note));
+    k.appendChild(b);
+  });
+}
+function liveDown(note){
+  if (!audioReady || liveHeld.includes(note)) return;
+  if (!liveHeld.length && biniouPrev){ biniouPrev = null; }
+  liveHeld.push(note);
+  levriad.triggerAttack(fq(note));           // glisse depuis la note tenue (portamento)
+  keyEl(note)?.classList.add('down');
+  if (liveRec && Tone.Transport.state === 'started' && currentStep >= 0){
+    state.biniou[currentStep] = note; refresh();
+  }
+}
+function liveUp(note){
+  const i = liveHeld.indexOf(note);
+  if (i < 0) return;
+  liveHeld.splice(i, 1);
+  keyEl(note)?.classList.remove('down');
+  if (liveHeld.length) levriad.triggerAttack(fq(liveHeld[liveHeld.length - 1]));  // retour lié
+  else levriad.triggerRelease();
+}
+const keyEl = note => document.querySelector(`.key[data-note="${note}"]`);
+
+document.addEventListener('keydown', e => {
+  if (e.repeat || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.code === 'Space'){ e.preventDefault(); togglePlay(); return; }
+  const i = KEY_CODES.indexOf(e.code);
+  if (i >= 0){ e.preventDefault(); liveDown(BINIOU_ROWS[i]); }
+});
+document.addEventListener('keyup', e => {
+  const i = KEY_CODES.indexOf(e.code);
+  if (i >= 0) liveUp(BINIOU_ROWS[i]);
+});
+
+/* =====================================================================
+   CONTRÔLES
+   ===================================================================== */
+function bindRange(id, fmt, apply){
+  const el = $(id), out = $(id + 'Out');
+  const run = () => { out.textContent = fmt(+el.value); if (audioReady) apply(+el.value); };
+  el.addEventListener('input', run); run();
+  return run;
+}
+const knobRuns = [
+  bindRange('bpm',   v => v,                          v => Tone.Transport.bpm.rampTo(v, 0.1)),
+  bindRange('vol',   v => `${v} dB`,                  v => master.volume.rampTo(v, 0.05)),
+  bindRange('kdrive',v => v.toFixed(2),               v => kickDrive.distortion = v),
+  bindRange('bcut',  v => `${v} Hz`,                  v => bass.filterEnvelope.baseFrequency = v),
+  bindRange('bres',  v => v,                          v => bass.filter.Q.value = v),
+  bindRange('bdec',  v => `${v.toFixed(2)} s`,        v => { bass.filterEnvelope.decay = v; bass.envelope.decay = v + 0.02; }),
+  bindRange('glide', v => `${Math.round(v*1000)} ms`, v => levriad.portamento = v),
+  bindRange('bite',  v => `${v} Hz`,                  v => { levriad.voice0.filterEnvelope.baseFrequency = v; levriad.voice1.filterEnvelope.baseFrequency = v; }),
+  bindRange('dly',   v => `${Math.round(v*100)} %`,   v => levDelay.wet.rampTo(v, 0.05)),
+  bindRange('rev',   v => `${Math.round(v*100)} %`,   v => levReverb.wet.rampTo(v, 0.05)),
+  bindRange('dvol',  v => `${v} dB`,                  v => droneVol.volume.rampTo(v, 0.1)),
+];
+function applyAllKnobs(){ knobRuns.forEach(r => r()); }
+
+$('tonic').addEventListener('change', e => {
+  transpose = +e.target.value;
+  if (audioReady) droneOsc.frequency.rampTo(fq(DRONE_NOTE), 0.3);
+});
+
+function setStatus(t){ $('status').textContent = t; }
+
+function togglePlay(){
+  if (!audioReady) return;
+  if (Tone.Transport.state === 'started'){
+    Tone.Transport.stop();
+    levriad.triggerRelease(); biniouPrev = null;
+    document.querySelectorAll('.cell.play').forEach(c => c.classList.remove('play'));
+    currentStep = -1;
+    $('playBtn').textContent = 'Lecture'; $('playBtn').classList.remove('on');
+  } else {
+    Tone.Transport.start('+0.05');
+    $('playBtn').textContent = 'Stop'; $('playBtn').classList.add('on');
+  }
+}
+$('playBtn').addEventListener('click', togglePlay);
+
+$('droneBtn').addEventListener('click', () => {
+  droneOn = !droneOn;
+  droneGate.gain.rampTo(droneOn ? 1 : 0, 0.4);
+  $('droneBtn').textContent = `Bourdon : ${droneOn ? 'on' : 'off'}`;
+  $('droneBtn').classList.toggle('on', droneOn);
+});
+
+$('ornBtn').addEventListener('click', () => {
+  ornaments = !ornaments;
+  $('ornBtn').textContent = `Ornements : ${ornaments ? 'on' : 'off'}`;
+  $('ornBtn').classList.toggle('on', ornaments);
+});
+$('liveRecBtn').addEventListener('click', () => {
+  liveRec = !liveRec;
+  $('liveRecBtn').textContent = `Écrire au clavier : ${liveRec ? 'on' : 'off'}`;
+  $('liveRecBtn').classList.toggle('on', liveRec);
+});
+
+document.querySelectorAll('[data-clear]').forEach(b => b.addEventListener('click', () => {
+  const w = b.dataset.clear;
+  if (w === 'drums') ['kick','snare','hat'].forEach(k => state[k].fill(0));
+  else state[w].fill(null);
+  refresh();
+}));
+
+/* ---------- Enregistrement de la sortie master ---------- */
+let recording = false;
+$('recBtn').addEventListener('click', async () => {
+  if (!recorder){ setStatus("Enregistrement indisponible : ce navigateur ne gère pas MediaRecorder."); return; }
+  if (!recording){
+    recorder.start(); recording = true;
+    $('recBtn').textContent = 'Arrêter l\'enregistrement'; $('recBtn').classList.add('on');
+    setStatus('Enregistrement de la sortie master…');
+  } else {
+    const blob = await recorder.stop(); recording = false;
+    $('recBtn').textContent = 'Enregistrer'; $('recBtn').classList.remove('on');
+    const ext = blob.type.includes('mp4') ? 'm4a' : blob.type.includes('ogg') ? 'ogg' : 'webm';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `cyber-fest-noz-${Date.now()}.${ext}`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    setStatus(`Fichier ${ext} téléchargé.`);
+  }
+});
+
+/* ---------- Sauvegarde du motif ---------- */
+$('saveBtn').addEventListener('click', async () => {
+  const where = await safeStorage.set('pattern', JSON.stringify({ state, bpm:+$('bpm').value, transpose }));
+  setStatus(where === 'idb' ? 'Motif sauvé dans le navigateur.' : 'Motif sauvé pour cette session uniquement.');
+});
+$('loadBtn').addEventListener('click', async () => {
+  const raw = await safeStorage.get('pattern');
+  if (!raw){ setStatus('Aucun motif sauvé. Cliquez d\'abord sur « Sauver ».'); return; }
+  try {
+    const d = JSON.parse(raw);
+    state = d.state; $('bpm').value = d.bpm; $('tonic').value = d.transpose;
+    transpose = d.transpose;
+    droneOsc.frequency.rampTo(fq(DRONE_NOTE), 0.3);
+    applyAllKnobs(); refresh(); setStatus('Motif chargé.');
+  } catch { setStatus('Le motif sauvé est illisible. Sauvez-en un nouveau.'); }
+});
+
+/* ---------- Oscilloscope vert terminal ---------- */
+function drawScope(){
+  const cv = $('scope'), ctx = cv.getContext('2d');
+  const w = cv.width = cv.clientWidth * devicePixelRatio, h = cv.height = 64 * devicePixelRatio;
+  (function loop(){
+    const v = scope.getValue();
+    ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = '#3dff7a'; ctx.lineWidth = 1.5 * devicePixelRatio; ctx.beginPath();
+    for (let i = 0; i < v.length; i++){
+      const x = i / (v.length - 1) * w, y = (0.5 - v[i] * 0.45) * h;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.stroke();
+    requestAnimationFrame(loop);
+  })();
+}
+
+/* =====================================================================
+   DÉMARRAGE — le contexte audio n'est créé qu'après ce clic
+   ===================================================================== */
+$('bootBtn').addEventListener('click', async () => {
+  const st = $('bootStatus');
+  if (typeof Tone === 'undefined'){
+    st.textContent = 'Tone.js ne s\'est pas chargé. Vérifiez la connexion puis rechargez la page.';
+    st.classList.add('err'); return;
+  }
+  $('bootBtn').disabled = true; st.textContent = 'Démarrage du moteur audio…';
+  try {
+    await Tone.start();
+    await buildAudio();
+    audioReady = true;
+    ['playBtn','droneBtn','recBtn','saveBtn','loadBtn'].forEach(id => $(id).disabled = false);
+    $('boot').classList.add('hidden');
+    setStatus('Prêt. Espace = lecture/stop.');
+    drawScope();
+  } catch (err){
+    st.textContent = `Échec du démarrage audio : ${err.message}`; st.classList.add('err');
+    $('bootBtn').disabled = false;
+  }
+});
+
+/* ---------- Rendu initial ---------- */
+buildDrumGrid();
+buildRoll('bassGrid', BASS_ROWS, 'bass');
+buildRoll('biniouGrid', BINIOU_ROWS, 'biniou');
+buildKeys();
+refresh();
+</script>
+</body>
+</html>
