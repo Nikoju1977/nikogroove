@@ -1,5 +1,8 @@
 # NikoGroove — Cyber-Fest-Noz
 
+> **Statut portfolio (octobre 2026) — variante conservée, non sélectionnée dans la vitrine.** La version de référence retenue pour la groovebox Cyber-Fest-Noz est EBM-BRETONNE. Cette variante reste consultable pour préserver son historique et comparer les évolutions. Voir [la politique de sélection](https://github.com/Nikoju1977/Nikoju1977/blob/main/CURATION.md) et [le projet de référence](https://github.com/Nikoju1977/EBM-BRETONNE.).
+
+
 **Catégorie : musique électronique & création sonore** · Studio Niko Design
 
 Expérimentation de groovebox EBM / Breizh fonctionnant dans le navigateur. Le document principal `index.html` affiche « Cyber-Fest-Noz V2 — Groovebox EBM Breizh ». Le dépôt contient également `index.v1.html`, version antérieure.
