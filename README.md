@@ -10,7 +10,23 @@ Un laboratoire sonore qui fusionne l'esthétique industrielle de l'EBM et les ti
 
 [English overview](#english-overview) · [Démarrage rapide](#quickstart--démarrage-rapide) · [Issues](https://github.com/Nikoju1977/nikogroove/issues)
 
-> [Insérer ici un GIF de démonstration / Insert demo GIF here]
+> **À essayer en premier :** construire un pattern EBM, ajouter une mélodie de biniou et exporter le projet JSON. Cette version reste une variante historique de Cyber-Fest-Noz.
+
+## Parcours de validation reproductible / Reproducible audio check
+
+Procédure proposée, **non exécutée pour cette révision**. Utiliser un navigateur connecté au réseau pour charger Tone.js ; relever la version Git, le navigateur et l'appareil.
+
+| Essai | Résultat attendu et preuve à conserver |
+| --- | --- |
+| Transport | Activer l'audio, jouer un pattern, modifier tempo et swing ; noter toute coupure |
+| Instruments | Déclencher les percussions, la basse et le biniou ; vérifier le relâchement des notes |
+| Mixage | Tester les six voies, mute/solo et niveau du master |
+| Enregistrement | Si MediaRecorder est disponible, capturer un court extrait ; vérifier son type MIME, sa durée et sa lecture |
+| Sauvegarde | Exporter JSON, modifier un pattern, réimporter ; vérifier la restauration |
+
+Le format de capture dépend du navigateur ; ne pas renommer un enregistrement WebM/Ogg en WAV. Le limiteur ne constitue pas une mesure true peak ni une certification de mastering. Le stockage de secours en mémoire n'est pas durable. Aucun test de latence ou de qualité sonore n'est revendiqué ici.
+
+**English:** Test Tone.js loading, transport, synthesized instruments, mixer, optional recording and JSON recovery separately. Browser recording is not a guaranteed PCM WAV export. This checklist does not certify runtime compatibility.
 
 > **Statut : variante historique, non sélectionnée dans la vitrine.** [Projet de référence EBM-BRETONNE.](https://github.com/Nikoju1977/EBM-BRETONNE.)
 
